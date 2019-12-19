@@ -44,17 +44,50 @@ jobs:
       with:
         file: target/release/${{ matrix.daemon_name }}
 
-    - name: Upload client binaries to release
+    - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v1-release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/release/${{ matrix.client_name }}
         asset_name: ${{ matrix.client_release_name }}
         tag: ${{ github.ref }}
-    - name: Upload daemon binaries to release
       uses: svenstaro/upload-release-action@v1-release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/release/${{ matrix.daemon_name }}
         asset_name: ${{ matrix.daemon_release_name }}
+        tag: ${{ github.ref }}
+
+
+    - name: Provide musl support
+      if: matrix.os == "ubuntu-latest"
+      run: rustup target add x86_64-unknown-linux-musl
+
+    - name: Build the static linux binary
+      if: matrix.os == "ubuntu-latest"
+      run: cargo build --release --locked --target x86_64-unknown-linux-musl
+
+    - name: Build the binary
+      if: matrix.os == "ubuntu-latest"
+      run: cargo build --release --locked
+    - uses: svenstaro/upx-action@v1-release
+      with:
+        file: target/x86_64-unknown-linux-musl/release/${{ matrix.client_name }}
+    - uses: svenstaro/upx-action@v1-release
+      with:
+        file: target/x86_64-unknown-linux-musl/release/${{ matrix.daemon_name }}
+
+    - name: Upload static binaries to release
+      if: matrix.os == "ubuntu-latest"
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: target/x86_64-unknown-linux-musl/release/${{ matrix.client_name }}
+        asset_name: static-${{ matrix.client_release_name }}
+        tag: ${{ github.ref }}
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: target/x86_64-unknown-linux-musl/release/${{ matrix.daemon_name }}
+        asset_name: static-${{ matrix.daemon_release_name }}
         tag: ${{ github.ref }}
