@@ -50,7 +50,7 @@ pub async fn receive_bytes(socket: &mut TcpStream) -> Result<Vec<u8>> {
     let message_size = header.read_u64::<BigEndian>()? as usize;
 
     // Buffer for the whole payload
-    let mut payload_bytes = Vec::new();
+    let mut payload_bytes = Vec::with_capacity(message_size);
 
     // Receive chunks until we reached the expected message size
     while payload_bytes.len() < message_size {
